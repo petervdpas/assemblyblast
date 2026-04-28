@@ -1,6 +1,10 @@
-# AssemblyBlast
+# AssemblyBlast 🧩
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](assets/LICENSE.txt)
+[![NuGet](https://img.shields.io/nuget/v/AssemblyBlast.svg)](https://www.nuget.org/packages/AssemblyBlast)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/AssemblyBlast.svg)](https://www.nuget.org/packages/AssemblyBlast)
+[![License](https://img.shields.io/github/license/petervdpas/AssemblyBlast.svg)](https://opensource.org/licenses/MIT)
+
+![AssemblyBlast](https://raw.githubusercontent.com/petervdpas/AssemblyBlast/master/assets/icon.png)
 
 **AssemblyBlast** is a sibling in the Blast family of NuGet packages. It produces .NET types and assemblies at runtime from JSON definitions or programmatic property metadata, using Roslyn for source-to-IL compilation and `System.Reflection.Emit` for in-process type building.
 
