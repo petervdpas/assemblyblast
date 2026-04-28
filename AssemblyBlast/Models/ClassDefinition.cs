@@ -13,6 +13,29 @@ public class ClassDefinition
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
+    ///     Gets or sets the namespace the type lives in. Populated by
+    ///     <see cref="AssemblyReader" />; ignored by the generator path,
+    ///     which derives the namespace from the wrapping <c>RootDefinition</c>.
+    /// </summary>
+    public string Namespace { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     Gets or sets the kind of type (<c>class</c>, <c>record</c>,
+    ///     <c>struct</c>, or <c>interface</c>). Defaults to <c>class</c>
+    ///     for back-compat with the generator path.
+    /// </summary>
+    public string Kind { get; set; } = "class";
+
+    /// <summary>
+    ///     Gets or sets the unqualified name of the base type (e.g. <c>"BaseEntity"</c>),
+    ///     or empty when the type derives directly from <see cref="object" />.
+    /// </summary>
+    public string BaseType { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the XML-doc summary, when one is available.</summary>
+    public string Summary { get; set; } = string.Empty;
+
+    /// <summary>
     ///     Gets or sets the list of interfaces implemented by the class.
     /// </summary>
     public List<string> Implements { get; set; } = [];
