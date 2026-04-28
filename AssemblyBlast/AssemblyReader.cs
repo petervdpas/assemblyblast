@@ -90,7 +90,7 @@ public static class AssemblyReader
                         .Select(p => new ParameterDefinition
                         {
                             Name = p.Name ?? string.Empty,
-                            Type = FormatTypeName(p.ParameterType),
+                            Type = FormatParameterType(p),
                         })
                         .ToList(),
                     // BodyLines stays empty — we can't recover it via reflection.
@@ -377,6 +377,51 @@ public static class AssemblyReader
         var flagsField = attr.GetType().GetField("NullableFlags");
         if (flagsField?.GetValue(attr) is byte[] flags && flags.Length > 0)
             return flags[0] == 2;
+        return false;
+    }
+
+    // Format a constructor parameter's type, including nullability annotations:
+    // value-type Nullable<T> → "T?", and reference-type NRT-nullable → "T?".
+    private static string FormatParameterType(ParameterInfo p)
+    {
+        var t = p.ParameterType;
+
+        // Value-type nullables (Nullable<int> → "int?")
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
+            return FormatTypeName(t.GetGenericArguments()[0]) + "?";
+
+        // Reference-type NRT nullables (string? → "string?")
+        if (!t.IsValueType && IsNrtNullableParameter(p))
+            return FormatTypeName(t) + "?";
+
+        return FormatTypeName(t);
+    }
+
+    private static bool IsNrtNullableParameter(ParameterInfo p)
+    {
+        // Param-level NullableAttribute overrides the surrounding context.
+        var paramAttr = p.GetCustomAttributes()
+            .FirstOrDefault(a => a.GetType().Name == "NullableAttribute");
+        if (paramAttr is not null)
+        {
+            var flagsField = paramAttr.GetType().GetField("NullableFlags");
+            if (flagsField?.GetValue(paramAttr) is byte[] flags && flags.Length > 0)
+                return flags[0] == 2;
+        }
+
+        // Fall back to NullableContextAttribute on the declaring method,
+        // then on the declaring type. Byte 2 = nullable default.
+        var ctxAttr = p.Member.GetCustomAttributes()
+            .FirstOrDefault(a => a.GetType().Name == "NullableContextAttribute")
+            ?? p.Member.DeclaringType?.GetCustomAttributes()
+                .FirstOrDefault(a => a.GetType().Name == "NullableContextAttribute");
+
+        if (ctxAttr is not null)
+        {
+            var flagField = ctxAttr.GetType().GetField("Flag");
+            if (flagField?.GetValue(ctxAttr) is byte flag) return flag == 2;
+        }
+
         return false;
     }
 

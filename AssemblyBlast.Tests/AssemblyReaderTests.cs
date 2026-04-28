@@ -190,6 +190,27 @@ public class AssemblyReaderTests
 
         Assert.DoesNotContain(classes, c => c.Name == nameof(StaticHolder));
     }
+
+    [Fact]
+    public void ReadClass_PreservesNullabilityOnConstructorParameters()
+    {
+        // The reader must keep `string? line2` as `string?` and `int?` as `int?`
+        // — losing the `?` produces invalid C# when the ctor signature is rendered.
+        var def = AssemblyReader.ReadClass(typeof(WithNullableCtor));
+        var ctor = Assert.Single(def.Constructors);
+
+        var first = ctor.Parameters[0];
+        Assert.Equal("line1", first.Name);
+        Assert.Equal("string", first.Type);
+
+        var second = ctor.Parameters[1];
+        Assert.Equal("line2", second.Name);
+        Assert.Equal("string?", second.Type);
+
+        var third = ctor.Parameters[2];
+        Assert.Equal("count", third.Name);
+        Assert.Equal("int?", third.Type);
+    }
 }
 
 // ── Fixtures ────────────────────────────────────────────────
@@ -287,3 +308,20 @@ public static class StaticHolder
 {
     public static int Constant => 42;
 }
+
+#nullable enable
+/// <summary>Has a ctor mixing reference- and value-type nullables.</summary>
+public class WithNullableCtor
+{
+    public WithNullableCtor(string line1, string? line2, int? count)
+    {
+        Line1 = line1;
+        Line2 = line2;
+        Count = count;
+    }
+
+    public string Line1 { get; init; }
+    public string? Line2 { get; init; }
+    public int? Count { get; init; }
+}
+#nullable restore

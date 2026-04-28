@@ -90,7 +90,7 @@ What gets surfaced:
 - **Kind**: `class` / `record` / `struct` / `interface`. Static classes (sealed + abstract) and compiler-generated types are skipped.
 - **Properties**: instance, public-getter properties. The classic OOP shape — private backing field + public ctor + read-only `public T Foo { get; }` — is recognised: properties whose name matches a public-ctor parameter are flagged as ctor-fed (`IsDerived = false`), while expression-bodied / truly computed properties (no matching ctor param) are flagged `IsDerived = true`. Records' positional parameters fall under the same rule. Private setters carry `AccessorVisibility = "private"` so consumers can tell them apart from public setters and from get-only properties.
 - **Auto-implemented record interfaces** (`IEquatable<TSelf>` on records) are filtered — they're compiler artefacts, not user-authored.
-- **Constructors**: parameter list captured per public ctor; bodies aren't recovered (would require IL decompilation).
+- **Constructors**: parameter list captured per public ctor, with nullability annotations preserved (`string?`, `int?`) — both reference-type NRT and value-type `Nullable<T>`. Bodies aren't recovered (would require IL decompilation).
 - **Enums**: underlying numeric type as a C# keyword (`byte`, `int`, `ulong`…), `[Flags]` attribution, and members with values normalised to `long`.
 - **XML-doc summaries**: if `<assembly-name>.xml` sits next to the `.dll`, summaries on types, properties, and enum members are attached.
 
