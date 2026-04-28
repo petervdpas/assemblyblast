@@ -160,6 +160,36 @@ public class AssemblyReaderTests
         Assert.Contains(enums, e => e.Name == nameof(ByteEnum));
         Assert.DoesNotContain(enums, e => e.Name == nameof(SimpleClass));
     }
+
+    [Fact]
+    public void ReadClass_DropsAutoImplementedIEquatableOnRecords()
+    {
+        // SimpleRecord auto-gets IEquatable<SimpleRecord> from the compiler.
+        // The reader must filter it out so it doesn't show up as a user-authored interface.
+        var def = AssemblyReader.ReadClass(typeof(SimpleRecord));
+
+        Assert.DoesNotContain("IEquatable<SimpleRecord>", def.Implements);
+    }
+
+    [Fact]
+    public void ReadClass_KeepsExplicitIEquatableOnNonRecord()
+    {
+        // ManuallyEquatable explicitly declares IEquatable<ManuallyEquatable>; that's
+        // user-authored and must NOT be filtered.
+        var def = AssemblyReader.ReadClass(typeof(ManuallyEquatable));
+
+        Assert.Contains("IEquatable<ManuallyEquatable>", def.Implements);
+    }
+
+    [Fact]
+    public void ReadClasses_SkipsStaticClasses()
+    {
+        // StaticHolder (sealed + abstract on the CLR side) is not a domain type
+        // and must not appear in the class list.
+        var classes = AssemblyReader.ReadClasses(Assembly.GetExecutingAssembly());
+
+        Assert.DoesNotContain(classes, c => c.Name == nameof(StaticHolder));
+    }
 }
 
 // ── Fixtures ────────────────────────────────────────────────
@@ -241,4 +271,19 @@ public enum ByteEnum : byte
 {
     A = 1,
     B = 2,
+}
+
+/// <summary>Hand-written equatable — the reader must keep this interface.</summary>
+public class ManuallyEquatable : IEquatable<ManuallyEquatable>
+{
+    public string Id { get; set; } = "";
+    public bool Equals(ManuallyEquatable? other) => other is not null && other.Id == Id;
+    public override bool Equals(object? obj) => Equals(obj as ManuallyEquatable);
+    public override int GetHashCode() => Id.GetHashCode();
+}
+
+/// <summary>Static class — must be skipped by ReadClasses.</summary>
+public static class StaticHolder
+{
+    public static int Constant => 42;
 }

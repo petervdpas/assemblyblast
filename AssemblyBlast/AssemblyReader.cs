@@ -20,7 +20,9 @@ public static class AssemblyReader
 {
     /// <summary>
     ///     Reads every public, non-nested class / record / struct / interface in <paramref name="asm" />.
-    ///     Compiler-generated types (display classes, anonymous types) are skipped.
+    ///     Compiler-generated types (display classes, anonymous types) and
+    ///     <c>static</c> classes (sealed + abstract holders for extension methods,
+    ///     fixture data, etc.) are skipped — they're not domain types.
     /// </summary>
     /// <param name="asm">The assembly to inspect.</param>
     /// <returns>One <see cref="ClassDefinition" /> per discovered type.</returns>
@@ -30,7 +32,7 @@ public static class AssemblyReader
         var docs = LoadXmlDocs(asm);
 
         return SafeExportedTypes(asm)
-            .Where(t => !t.IsEnum && !t.IsNested && !IsCompilerGenerated(t))
+            .Where(t => !t.IsEnum && !t.IsNested && !IsCompilerGenerated(t) && !IsStatic(t))
             .Select(t => ReadClass(t, docs))
             .ToList();
     }
@@ -78,6 +80,7 @@ public static class AssemblyReader
             Implements = type
                 .GetInterfaces()
                 .Where(i => i.DeclaringType is null) // top-level only
+                .Where(i => !(IsRecordType(type) && IsSelfIEquatable(type, i)))
                 .Select(FormatTypeName)
                 .ToList(),
             Constructors = ctors
@@ -291,6 +294,26 @@ public static class AssemblyReader
         t.GetCustomAttributes()
             .Any(a => a.GetType().Name == "CompilerGeneratedAttribute")
         || t.Name.Contains('<');
+
+    // C# `static class` lowers to `[abstract] [sealed]` on the CLR side.
+    private static bool IsStatic(Type t) => t.IsClass && t.IsAbstract && t.IsSealed;
+
+    // Records carry a compiler-emitted EqualityContract get-only property.
+    private static bool IsRecordType(Type t) =>
+        t.GetProperty(
+            "EqualityContract",
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public) is { } ec
+        && ec.PropertyType == typeof(Type);
+
+    // Records auto-implement IEquatable<TSelf>. That's a compiler artefact,
+    // not a user-authored interface, so it's noise in domain-modelling tools.
+    // The same shape on a non-record was hand-written; keep it.
+    private static bool IsSelfIEquatable(Type owner, Type iface)
+    {
+        if (!iface.IsGenericType) return false;
+        if (iface.GetGenericTypeDefinition() != typeof(IEquatable<>)) return false;
+        return iface.GetGenericArguments()[0] == owner;
+    }
 
     private static string ClassifyKind(Type t)
     {
