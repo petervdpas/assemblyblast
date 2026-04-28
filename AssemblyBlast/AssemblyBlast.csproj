@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageOutputPath>bin\$(Configuration)</PackageOutputPath>
+        <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>AssemblyBlast</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Peter van de Pas</Authors>
+        <Description>AssemblyBlast — runtime C# class generation and assembly compilation for .NET. Build types via Reflection.Emit or compile JSON-defined assemblies via Roslyn. Sibling in the Blast family, split out of the legacy Mnemonics.CodingTools package.</Description>
+        <PackageTags>roslyn;reflection-emit;codegen;dynamic-types;dynamic-assembly;blast</PackageTags>
+        <PackageLicenseFile>assets/LICENSE.txt</PackageLicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageIcon>assets/icon.png</PackageIcon>
+        <DebugType>embedded</DebugType>
+        <Deterministic>true</Deterministic>
+        <PathMap>$(MSBuildProjectDirectory)=.</PathMap>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <EnableSourceLink>true</EnableSourceLink>
+        <RepositoryUrl>https://github.com/petervdpas/AssemblyBlast</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../assets/icon.png" Pack="true" PackagePath="assets/" />
+        <None Include="../assets/LICENSE.txt" Pack="true" PackagePath="assets/" />
+        <None Include="../README.md" Pack="true" PackagePath="" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="AssemblyBlast.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    </ItemGroup>
+
+    <!--
+        Blast-family convention: declare the canonical front-door type(s)
+        of this assembly so AI assistants (e.g. TaskBlaster's script
+        helper) can identify the entry points without having to scan
+        every public type. Comma-separated, fully-qualified.
+    -->
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>Blast.PrimaryFacade</_Parameter1>
+            <_Parameter2>AssemblyBlast.DynamicClassGenerator,AssemblyBlast.DynamicClassBuilder</_Parameter2>
+        </AssemblyAttribute>
+    </ItemGroup>
+</Project>

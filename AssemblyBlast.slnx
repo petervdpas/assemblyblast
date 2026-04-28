@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AssemblyBlast.Tests/AssemblyBlast.Tests.csproj" />
+  <Project Path="AssemblyBlast/AssemblyBlast.csproj" />
+</Solution>
