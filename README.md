@@ -10,6 +10,7 @@
 
 - **Forward** — produce .NET types and assemblies at runtime from JSON definitions or programmatic property metadata, using Roslyn for source-to-IL compilation and `System.Reflection.Emit` for in-process type building.
 - **Backward** *(since 1.1)* — read existing assemblies into the same `ClassDefinition` / `EnumDefinition` shapes, so a downstream tool (UI generator, schema exporter, doc tool) can describe a DLL the same way it describes a synthetic type.
+- **Round-trip** *(since 1.2)* — render those shapes back to C# source with `AssemblyWriter`, optionally writing a folder tree (`Acme.Domain.Crm` → `Acme/Domain/Crm/`). Closes the loop *Assembly → ClassDefinition → C# source*, so a design surface that owns the `ClassDefinition` shapes can regenerate the project's `.cs` files.
 
 It is the codegen pack split out of the legacy `Mnemonics.CodingTools` package. The runtime entity-store and dynamic EF registry layer that used to live alongside it now lives in **EntityBlast**. AssemblyBlast and EntityBlast are independent and neither depends on the other.
 
@@ -18,6 +19,7 @@ It is the codegen pack split out of the legacy `Mnemonics.CodingTools` package. 
 - **`IDynamicClassBuilder`** — define properties at runtime and produce a fresh `Type` via `Reflection.Emit`. Properties are decorated with `FieldWithAttributes` so a downstream UI or store layer can introspect them.
 - **`IDynamicClassGenerator`** — feed in a JSON definition (namespaces, classes, properties, constructors, methods) and get back a compiled `.dll` plus the list of namespaces it contains.
 - **`AssemblyReader`** *(1.1+)* — reflect over an existing `Assembly` and produce `ClassDefinition[]` / `EnumDefinition[]`, including base type, interfaces, constructors, ctor-fed property detection, nullability / collection unwrapping, `[Flags]` enums, and XML-doc summaries when the sibling `.xml` is present.
+- **`AssemblyWriter`** *(1.2+)* — mirror of the reader. Render any `ClassDefinition` / `EnumDefinition` back to C# source, with file-scoped namespaces, ctor body assignments derived from case-insensitive param/property matching, the right accessor shape per property, `[Flags]` and underlying-type emission for enums, and XML-doc summaries preserved. `WriteToFolder` lays out files under a namespace-as-path tree.
 - **`DynamicAssemblyCache`** — load a generated assembly once per path; subsequent loads return the cached `Assembly` so reference identity is preserved.
 - **`AssemblyHelper`** — utilities for collecting `MetadataReference`s and probing the current `AppDomain`.
 
